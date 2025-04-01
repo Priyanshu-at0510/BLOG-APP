@@ -14,7 +14,8 @@ exports.likePosts=async (req,res)=>{
         })
         const savedLike=await like.save();
 
-        const updatedpost=await Post.findByIdAndUpdate(post,{$push:{likes:savedLike._id}},{new:true});
+        const updatedpost=await Post.findByIdAndUpdate(post,{$push:{likes:savedLike._id}},{new:true})
+        .populate("likes").exec();
         res.status(200).json({
             success:true,
             post:updatedpost,
@@ -23,7 +24,30 @@ exports.likePosts=async (req,res)=>{
         console.error(error);
         return res.status(400).json({
         success: false,
-        error: "Error while creating comment"
+        error: "Error while liking post"
+    }); 
+    }
+}
+
+//unlike a post
+exports.unlikePosts=async (req,res)=>{
+    try {
+        //fetch the data from req body
+        const {post,like}=req.body;
+        //find and delete the like collection me se
+        const deletedLike=await Like.findOneAndDelete({post:post,_id:like});
+        //update the post collection
+        const updatedpost=await Post.findByIdAndUpdate(post,{$pull:{likes:deletedLike._id}},{new:true});
+        res.status(201).json({
+            success:true,
+            post:updatedpost
+        });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(400).json({
+        success: false,
+        error: "Error while unliking post"
     }); 
     }
 }
